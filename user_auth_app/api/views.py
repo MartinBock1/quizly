@@ -1,6 +1,15 @@
+from rest_framework import status
+from .serializers import RegistrationSerializer
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from rest_framework.response import Response
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.views import APIView
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
 # Custom JWT Authentication that reads token from cookie
+
+
 class CookieJWTAuthentication(JWTAuthentication):
     def authenticate(self, request):
         access_token = request.COOKIES.get('access_token')
@@ -11,14 +20,6 @@ class CookieJWTAuthentication(JWTAuthentication):
             except Exception:
                 return None
         return super().authenticate(request)
-from rest_framework import status
-from rest_framework.views import APIView
-from rest_framework.permissions import AllowAny, IsAuthenticated
-from rest_framework.response import Response
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-from rest_framework_simplejwt.tokens import RefreshToken
-
-from .serializers import RegistrationSerializer
 
 
 class RegistrationView(APIView):
@@ -79,7 +80,8 @@ class CookieTokenObtainPairView(TokenObtainPairView):
     Security:
         - Cookies are set with httponly and secure flags to prevent XSS attacks
         - No tokens are exposed in the response body
-    """    
+    """
+
     def post(self, request, *args, **kwargs):
         """
         Handles user login and sets JWT tokens as secure cookies.
@@ -134,7 +136,7 @@ class CookieTokenObtainPairView(TokenObtainPairView):
             secure=True,
             samesite="Lax",
         )
-        
+
         response.status_code = status.HTTP_200_OK
 
         # Modify the response data to return a success message instead of the tokens.
@@ -147,6 +149,7 @@ class CookieTokenObtainPairView(TokenObtainPairView):
             }
         }
         return response
+
 
 class CookieTokenRefreshView(TokenRefreshView):
     """
@@ -198,7 +201,10 @@ class CookieTokenRefreshView(TokenRefreshView):
         access_token = serializer.validated_data.get("access")
 
         # Create a response with a success message.
-        response = Response({"message": "access token refreshed"})
+        response = Response({
+            "detail": "Token refreshed",
+            "access": access_token
+        })
         # Set the new access token in a secure, HTTPOnly cookie.
         response.set_cookie(
             key="access_token",
@@ -239,5 +245,3 @@ class LogoutView(APIView):
             return response
         except Exception:
             return Response({"detail": "Internal server error."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-
