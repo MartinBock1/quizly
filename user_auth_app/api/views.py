@@ -1,8 +1,22 @@
+from rest_framework_simplejwt.authentication import JWTAuthentication
+
+# Custom JWT Authentication that reads token from cookie
+class CookieJWTAuthentication(JWTAuthentication):
+    def authenticate(self, request):
+        access_token = request.COOKIES.get('access_token')
+        if access_token:
+            try:
+                validated_token = self.get_validated_token(access_token)
+                return self.get_user(validated_token), validated_token
+            except Exception:
+                return None
+        return super().authenticate(request)
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from .serializers import RegistrationSerializer
 
@@ -195,3 +209,35 @@ class CookieTokenRefreshView(TokenRefreshView):
         )
 
         return response
+
+
+class LogoutView(APIView):
+    """
+    Handles user logout by deleting all tokens and removing cookies.
+    POST /api/logout/
+    """
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [CookieJWTAuthentication]
+
+    def post(self, request):
+        try:
+            # Try to blacklist the refresh token if present
+            refresh_token = request.COOKIES.get('refresh_token')
+            if refresh_token:
+                try:
+                    token = RefreshToken(refresh_token)
+                    token.blacklist()
+                except Exception:
+                    pass  # Ignore if token is already invalid
+
+            response = Response({
+                "detail": "Log-Out successfully! All Tokens will be deleted. Refresh token is now invalid."
+            }, status=status.HTTP_200_OK)
+            # Remove cookies
+            response.delete_cookie('access_token')
+            response.delete_cookie('refresh_token')
+            return response
+        except Exception:
+            return Response({"detail": "Internal server error."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
