@@ -61,8 +61,13 @@ def generate_quiz_with_gemini(transcript):
         questions = []
         for i in range(10):
             questions.append({
-                "question_title": f"*Question {i+1}",
-                "question_options": ["Option A", "Option B", "Option C", "Option D"],
-                "answer": "Option A"
+                "question_title": f"[Dummy] KI/Parsing-Fehler – Beispiel-Frage {i+1}",
+                "question_options": [
+                    "Die KI konnte keine echte Antwort generieren.",
+                    "Dies ist eine Dummy-Option.",
+                    "Bitte prüfen Sie die Eingabedaten.",
+                    "Kontaktieren Sie ggf. den Support."
+                ],
+                "answer": "Keine echte Antwort vorhanden (Dummy)"
             })
     return questions
