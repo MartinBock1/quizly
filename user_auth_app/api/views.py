@@ -35,7 +35,6 @@ class CookieJWTAuthentication(JWTAuthentication):
         return super().authenticate(request)
 
 
-
 class RegistrationView(APIView):
     """
     API endpoint for user registration.
@@ -201,7 +200,6 @@ class CookieTokenRefreshView(TokenRefreshView):
             samesite="Lax",
         )
         return response
-
 
 
 class LogoutView(APIView):

@@ -26,41 +26,43 @@ class CreateQuizView(APIView):
     authentication_classes = [CookieJWTAuthentication]
 
     def post(self, request):
-        
+        from quizzly_app.utils.quiz_pipeline import extract_audio_from_youtube, transcribe_audio, generate_quiz_with_gemini
         url = request.data.get('url')
         if not url or not url.startswith('https://www.youtube.com/watch?v='):
             return Response({"detail": "Invalid YouTube URL."}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Videoinformationen mit yt-dlp extrahieren
+        # Schritt 1: Audio extrahieren
         try:
-            tmp_filename = '/tmp/%(id)s.%(ext)s'  # Beispiel für temporären Pfad
-            ydl_opts = {
-                "format": "bestaudio/best",
-                "outtmpl": tmp_filename,
-                "quiet": True,
-                "noplaylist": True,
-                "skip_download": True
-            }
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                info = ydl.extract_info(url, download=False)
-            title = info.get('title', 'Quiz Title')
-            description = info.get('description', 'Quiz Description')
-        except Exception:
-            title = 'Quiz Title'
-            description = 'Quiz Description'
+            audio_path = extract_audio_from_youtube(url)
+        except Exception as e:
+            return Response({"detail": f"Audio extraction failed: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+        # Schritt 2: Transkribieren
+        try:
+            transcript = transcribe_audio(audio_path, model_name="base")
+        except Exception as e:
+            return Response({"detail": f"Transcription failed: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        # Schritt 3: Quizfragen generieren
+        try:
+            questions_data = generate_quiz_with_gemini(transcript)
+        except Exception as e:
+            return Response({"detail": f"Quiz generation failed: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        # Schritt 4: Quiz speichern
         quiz = Quiz.objects.create(
-            title=title,
-            description=description,
+            title=f"Quiz zu {url}",
+            description="Automatisch generiert aus YouTube-Video.",
             video_url=url,
             owner=request.user
         )
-        question = Question.objects.create(
-            quiz=quiz,
-            question_title="Question 1",
-            question_options=["Option A", "Option B", "Option C", "Option D"],
-            answer="Option A"
-        )
+        for q in questions_data:
+            Question.objects.create(
+                quiz=quiz,
+                question_title=q["question_title"],
+                question_options=q["question_options"],
+                answer=q["answer"]
+            )
 
         from .serializers import QuizSerializer
         serializer = QuizSerializer(quiz)

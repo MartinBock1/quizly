@@ -10,11 +10,16 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
+from dotenv import load_dotenv
+load_dotenv()
+import os
 from datetime import timedelta
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
 
 
 # Quick-start development settings - unsuitable for production
@@ -150,4 +155,10 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.TokenAuthentication',
     ]
+}
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),  # z.B. 30 Minuten
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),     # z.B. 7 Tage
+    # Optional: weitere Einstellungen
 }
