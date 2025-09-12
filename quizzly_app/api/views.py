@@ -35,21 +35,21 @@ class CreateQuizView(APIView):
         try:
             audio_path = extract_audio_from_youtube(url)
         except Exception as e:
-            return Response({"detail": f"Audio extraction failed: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            error_msg = f"Audio extraction failed: {str(e)}"
+            return self._dummy_quiz_response(url, request.user, error_msg)
 
-        # Schritt 2: Transkribieren
         try:
             transcript = transcribe_audio(audio_path, model_name="base")
         except Exception as e:
-            return Response({"detail": f"Transcription failed: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            error_msg = f"Transcription failed: {str(e)}"
+            return self._dummy_quiz_response(url, request.user, error_msg)
 
-        # Schritt 3: Quizfragen generieren
         try:
             questions_data = generate_quiz_with_gemini(transcript)
         except Exception as e:
-            return Response({"detail": f"Quiz generation failed: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            error_msg = f"Quiz generation failed: {str(e)}"
+            return self._dummy_quiz_response(url, request.user, error_msg)
 
-        # Schritt 4: Quiz speichern
         quiz = Quiz.objects.create(
             title=f"Quiz zu {url}",
             description="Automatisch generiert aus YouTube-Video.",
@@ -63,7 +63,29 @@ class CreateQuizView(APIView):
                 question_options=q["question_options"],
                 answer=q["answer"]
             )
-
         from .serializers import QuizSerializer
         serializer = QuizSerializer(quiz)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    def _dummy_quiz_response(self, url, user, error_msg):
+        from quizzly_app.utils.quiz_pipeline import generate_quiz_with_gemini
+        questions_data = generate_quiz_with_gemini("DUMMY")
+        quiz = Quiz.objects.create(
+            title=f"Beispiel-Quiz zu {url}",
+            description=error_msg,
+            video_url=url,
+            owner=user
+        )
+        for q in questions_data:
+            Question.objects.create(
+                quiz=quiz,
+                question_title=q["question_title"],
+                question_options=q["question_options"],
+                answer=q["answer"]
+            )
+        from .serializers import QuizSerializer
+        serializer = QuizSerializer(quiz)
+        return Response({
+            "detail": error_msg,
+            "dummy_quiz": serializer.data
+        }, status=status.HTTP_201_CREATED)

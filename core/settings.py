@@ -15,6 +15,9 @@ load_dotenv()
 import os
 from datetime import timedelta
 from pathlib import Path
+import warnings
+
+warnings.filterwarnings("ignore", message="FP16 is not supported on CPU; using FP32 instead")
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -26,7 +29,8 @@ GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-)f!aajbxjt(p6skdtdu&l9n@15v)474+90=p=z@$66$ej9&pm5'
+# SECRET_KEY = 'django-insecure-)f!aajbxjt(p6skdtdu&l9n@15v)474+90=p=z@$66$ej9&pm5'
+SECRET_KEY = os.getenv('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
