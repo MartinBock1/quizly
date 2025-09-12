@@ -1,24 +1,23 @@
-from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
+from user_auth_app.api.views import CookieJWTAuthentication
 
-from quizzly_app.models import Quiz, Question
+from ..models import Quiz, Question
+from .serializers import QuizSerializer
 
 
-# Custom JWT Authentication that reads token from cookie
-class CookieJWTAuthentication(JWTAuthentication):
-    def authenticate(self, request):
-        access_token = request.COOKIES.get('access_token')
-        if access_token:
-            try:
-                validated_token = self.get_validated_token(access_token)
-                return self.get_user(validated_token), validated_token
-            except Exception:
-                return None
-        return super().authenticate(request)
 
+
+class UserQuizListView(APIView):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [CookieJWTAuthentication]
+
+    def get(self, request):
+        quizzes = Quiz.objects.filter(owner=request.user).order_by('-created_at')
+        serializer = QuizSerializer(quizzes, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 class CreateQuizView(APIView):
     permission_classes = [IsAuthenticated]

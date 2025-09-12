@@ -124,14 +124,14 @@ class CookieTokenObtainPairView(TokenObtainPairView):
             key="access_token",
             value=access,
             httponly=True,
-            secure=True,
+            secure=False,  # Für lokale Entwicklung
             samesite="Lax",
         )
         response.set_cookie(
             key="refresh_token",
             value=refresh,
             httponly=True,
-            secure=True,
+            secure=False,  # Für lokale Entwicklung
             samesite="Lax",
         )
         response.status_code = status.HTTP_200_OK
@@ -196,7 +196,7 @@ class CookieTokenRefreshView(TokenRefreshView):
             key="access_token",
             value=access_token,
             httponly=True,
-            secure=True,
+            secure=False,  # Für lokale Entwicklung
             samesite="Lax",
         )
         return response
