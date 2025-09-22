@@ -117,3 +117,12 @@ class UserQuizDetailView(APIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
+    def delete(self, request, id):
+        try:
+            quiz = Quiz.objects.get(pk=id)
+        except Quiz.DoesNotExist:
+            return Response({"detail": "Quiz not found."}, status=status.HTTP_404_NOT_FOUND)
+        if quiz.owner != request.user:
+            return Response({"detail": "Access denied. Quiz does not belong to user."}, status=status.HTTP_403_FORBIDDEN)
+        quiz.delete()
+        return Response({"detail": "Quiz deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
