@@ -15,17 +15,14 @@ class RegistrationSerializer(serializers.ModelSerializer):
         """
         Meta class to specify the serializer's options.
         """
-        # Specify the model that this serializer is based on.
         model = User
-        # Define the fields to be included in the serializer.
         fields = ['username', 'email', 'password']
-        # Provide extra keyword arguments for specific fields.
         extra_kwargs = {
             'password': {
-                'write_only': True  # Ensure the password is not sent back in the response.
+                'write_only': True
             },
             'email': {
-                'required': True  # Make the email field mandatory for registration.
+                'required': True
             }
         }
 
@@ -42,7 +39,6 @@ class RegistrationSerializer(serializers.ModelSerializer):
         Returns:
             str: The validated email address.
         """
-        # Query the User model to see if a user with this email already exists.
         if User.objects.filter(email=value).exists():
             raise serializers.ValidationError('Email already exists')
         return value
@@ -57,18 +53,13 @@ class RegistrationSerializer(serializers.ModelSerializer):
 
         Returns:
             User: The newly created user account instance.
-        """
-        # Get the validated password from the serializer's data.
-        pw = self.validated_data['password']
-
-        # Create a new User instance with the validated email and username.
+        """        
+        pw = self.validated_data['password']        
         account = User(
             email=self.validated_data['email'],
             username=self.validated_data['username']
         )
-        # Hash the password for security before saving.
         account.set_password(pw)
-        # Save the new user object to the database.
         account.save()
-        # Return the created user account.
+        
         return account

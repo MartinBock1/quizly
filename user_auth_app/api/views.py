@@ -23,7 +23,6 @@ class CookieJWTAuthentication(JWTAuthentication):
         tuple: (user, validated_token) if authentication is successful.
         None: if authentication fails.
     """
-
     def authenticate(self, request):
         access_token = request.COOKIES.get('access_token')
         if access_token:
@@ -124,14 +123,14 @@ class CookieTokenObtainPairView(TokenObtainPairView):
             key="access_token",
             value=access,
             httponly=True,
-            secure=False,  # Für lokale Entwicklung
+            secure=False,  # for local development
             samesite="Lax",
         )
         response.set_cookie(
             key="refresh_token",
             value=refresh,
             httponly=True,
-            secure=False,  # Für lokale Entwicklung
+            secure=False,  # for local development
             samesite="Lax",
         )
         response.status_code = status.HTTP_200_OK
@@ -196,7 +195,7 @@ class CookieTokenRefreshView(TokenRefreshView):
             key="access_token",
             value=access_token,
             httponly=True,
-            secure=False,  # Für lokale Entwicklung
+            secure=False,  # for local development
             samesite="Lax",
         )
         return response
