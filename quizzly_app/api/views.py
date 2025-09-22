@@ -8,17 +8,6 @@ from ..models import Quiz, Question
 from .serializers import QuizSerializer
 
 
-
-
-class UserQuizListView(APIView):
-    permission_classes = [IsAuthenticated]
-    authentication_classes = [CookieJWTAuthentication]
-
-    def get(self, request):
-        quizzes = Quiz.objects.filter(owner=request.user).order_by('-created_at')
-        serializer = QuizSerializer(quizzes, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
 class CreateQuizView(APIView):
     permission_classes = [IsAuthenticated]
     authentication_classes = [CookieJWTAuthentication]
@@ -87,3 +76,44 @@ class CreateQuizView(APIView):
             "detail": error_msg,
             "dummy_quiz": serializer.data
         }, status=status.HTTP_201_CREATED)
+
+
+class UserQuizListView(APIView):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [CookieJWTAuthentication]
+
+    def get(self, request):
+        quizzes = Quiz.objects.filter(owner=request.user).order_by('-created_at')
+        serializer = QuizSerializer(quizzes, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class UserQuizDetailView(APIView):
+    
+
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [CookieJWTAuthentication]
+
+    def get(self, request, id):
+        try:
+            quiz = Quiz.objects.get(pk=id)
+        except Quiz.DoesNotExist:
+            return Response({"detail": "Quiz not found."}, status=status.HTTP_404_NOT_FOUND)
+        if quiz.owner != request.user:
+            return Response({"detail": "Access denied. Quiz does not belong to user."}, status=status.HTTP_403_FORBIDDEN)
+        serializer = QuizSerializer(quiz)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def patch(self, request, id):
+        try:
+            quiz = Quiz.objects.get(pk=id)
+        except Quiz.DoesNotExist:
+            return Response({"detail": "Quiz not found."}, status=status.HTTP_404_NOT_FOUND)
+        if quiz.owner != request.user:
+            return Response({"detail": "Access denied. Quiz does not belong to user."}, status=status.HTTP_403_FORBIDDEN)
+        serializer = QuizSerializer(quiz, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
