@@ -6,7 +6,11 @@ import os
 
 def extract_audio_from_youtube(url):
     """
-    Lädt das Audio einer YouTube-URL als mp3 herunter und gibt den Pfad zurück.
+    Downloads the audio from a YouTube URL as mp3 and returns the file path.
+    Args:
+        url (str): The YouTube video URL.
+    Returns:
+        str: Path to the downloaded mp3 file.
     """
     tmp_dir = tempfile.mkdtemp()
     tmp_filename = os.path.join(tmp_dir, '%(id)s.%(ext)s')
@@ -30,7 +34,12 @@ def extract_audio_from_youtube(url):
 
 def transcribe_audio(audio_path, model_name="base"):
     """
-    Transkribiert das Audiofile mit Whisper und gibt den Text zurück.
+    Transcribes the audio file using Whisper and returns the transcript text.
+    Args:
+        audio_path (str): Path to the audio file.
+        model_name (str): Whisper model name (default: "base").
+    Returns:
+        str: Transcribed text from the audio.
     """
     model = whisper.load_model(model_name)
     result = model.transcribe(audio_path)
@@ -39,7 +48,12 @@ def transcribe_audio(audio_path, model_name="base"):
 
 def generate_quiz_with_gemini(transcript):
     """
-    Sendet das Transkript an Gemini-Flash AI und erhält Quizfragen.
+    Sends the transcript to Gemini-Flash AI and receives quiz questions.
+    Returns a list of questions with title, options, and answer.
+    Args:
+        transcript (str): The transcript text to generate questions from.
+    Returns:
+        list: List of question dicts with 'question_title', 'question_options', and 'answer'.
     """
     from quizzly_app.utils.gemini import gemini_generate_content
     prompt = (
